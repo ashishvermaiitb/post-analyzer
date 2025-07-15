@@ -1,55 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { usePost } from "../../../hooks/usePosts";
 
 export default function PostDetails() {
   const { id } = useParams();
   const router = useRouter();
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { post, loading, error, updatePost } = usePost(id);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchPost();
-  }, [id]);
-
-  const fetchPost = async () => {
-    try {
-      setLoading(true);
-
-      // Simulate API call for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock data for testing
-      const mockPost = {
-        id: parseInt(id),
-        title: `Post ${id} Title`,
-        body: `This is the content of post ${id}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`,
-        userId: 1,
-      };
-
-      setPost(mockPost);
-      setTitle(mockPost.title);
-    } catch (error) {
-      console.error("Error fetching post:", error);
-    } finally {
-      setLoading(false);
+  // Update title state when post loads
+  useState(() => {
+    if (post) {
+      setTitle(post.title);
     }
-  };
+  }, [post]);
 
-  const updatePost = async () => {
+  const handleUpdatePost = async () => {
+    if (!title.trim()) {
+      alert("Title cannot be empty");
+      return;
+    }
+
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Update local state
-      setPost({ ...post, title });
+      setSaving(true);
+      await updatePost({ title: title.trim() });
       setEditing(false);
     } catch (error) {
       console.error("Error updating post:", error);
       alert("Failed to update post");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -59,6 +43,25 @@ export default function PostDetails() {
         <div className="flex items-center justify-center h-64">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
           <p className="ml-3 text-gray-600">Loading post...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="text-center py-8">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <strong className="font-bold">Error:</strong>
+            <span className="block sm:inline"> {error}</span>
+          </div>
+          <button
+            onClick={() => router.push("/")}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
     );
@@ -87,9 +90,22 @@ export default function PostDetails() {
       <div className="mb-6">
         <button
           onClick={() => router.push("/")}
-          className="text-blue-600 hover:text-blue-800 font-medium"
+          className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
         >
-          ← Back to Dashboard
+          <svg
+            className="w-4 h-4 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          Back to Dashboard
         </button>
       </div>
 
@@ -108,20 +124,23 @@ export default function PostDetails() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={saving}
             />
             <div className="mt-4 flex space-x-3">
               <button
-                onClick={updatePost}
-                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+                onClick={handleUpdatePost}
+                disabled={saving}
+                className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Changes
+                {saving ? "Saving..." : "Save Changes"}
               </button>
               <button
                 onClick={() => {
                   setEditing(false);
                   setTitle(post.title);
                 }}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+                disabled={saving}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -142,6 +161,9 @@ export default function PostDetails() {
         )}
 
         <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            Post Content
+          </h3>
           <p className="text-gray-600 leading-relaxed">{post.body}</p>
         </div>
 
@@ -150,14 +172,46 @@ export default function PostDetails() {
             Post Analysis
           </h3>
           <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-3">
               Analysis results will appear here once C++ backend is integrated.
             </p>
-            <div className="mt-2 text-sm text-gray-500">
-              <p>• Word count: Coming soon</p>
-              <p>• Sentiment score: Coming soon</p>
-              <p>• Keywords: Coming soon</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
+              <div className="bg-white p-3 rounded border">
+                <span className="font-medium">Word count:</span>
+                <span className="block text-lg font-bold text-gray-700">
+                  Coming soon
+                </span>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <span className="font-medium">Sentiment score:</span>
+                <span className="block text-lg font-bold text-gray-700">
+                  Coming soon
+                </span>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <span className="font-medium">Keywords:</span>
+                <span className="block text-lg font-bold text-gray-700">
+                  Coming soon
+                </span>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t">
+          <div className="text-sm text-gray-500">
+            <p>
+              <strong>Post ID:</strong> {post.id}
+            </p>
+            <p>
+              <strong>User ID:</strong> {post.userId}
+            </p>
+            {post.isLocal && (
+              <p className="text-blue-600 mt-2">
+                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                This is a locally created post
+              </p>
+            )}
           </div>
         </div>
       </div>
