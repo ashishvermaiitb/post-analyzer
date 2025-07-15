@@ -1,142 +1,180 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://jsonplaceholder.typicode.com";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const EXTERNAL_API_BASE_URL = "https://jsonplaceholder.typicode.com";
 
-// axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
+// Create axios instance for our database API
+const dbApi = axios.create({
+  baseURL: `${API_BASE_URL}/api`,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Added request interceptor for debugging
-api.interceptors.request.use(
+// Create axios instance for external API (JSONPlaceholder)
+const externalApi = axios.create({
+  baseURL: EXTERNAL_API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add request interceptor for database API (add API key for protected routes)
+dbApi.interceptors.request.use(
   (config) => {
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    // Add API key for POST, PUT, DELETE requests
+    if (["post", "put", "delete"].includes(config.method)) {
+      const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+      if (apiKey) {
+        config.headers["x-api-key"] = apiKey;
+      }
+    }
+
+    console.log(
+      `DB API Request: ${config.method?.toUpperCase()} ${config.url}`
+    );
     return config;
   },
   (error) => {
-    console.error("API Request Error:", error);
+    console.error("DB API Request Error:", error);
     return Promise.reject(error);
   }
 );
 
-// Added response interceptor for error handling
-api.interceptors.response.use(
+// Add response interceptor for error handling
+dbApi.interceptors.response.use(
   (response) => {
-    console.log(`API Response: ${response.status} ${response.config.url}`);
+    console.log(`DB API Response: ${response.status} ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error("API Response Error:", error.response?.status, error.message);
+    console.error(
+      "DB API Response Error:",
+      error.response?.status,
+      error.message
+    );
     return Promise.reject(error);
   }
 );
 
-// Posts API functions
+// Posts API functions - now using our database
 export const postsAPI = {
-  // Getting all posts with pagination support
-  async getAllPosts(page = 1, limit = 10) {
+  // Get all posts with pagination
+  async getAllPosts(page = 1, limit = 10, includeAnalysis = false) {
     try {
-      const response = await api.get("/posts");
-      const posts = response.data;
+      const response = await dbApi.get("/posts", {
+        params: { page, limit, includeAnalysis },
+      });
 
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedPosts = posts.slice(startIndex, endIndex);
-
-      return {
-        posts: paginatedPosts,
-        totalPosts: posts.length,
-        currentPage: page,
-        totalPages: Math.ceil(posts.length / limit),
-        hasNextPage: endIndex < posts.length,
-        hasPreviousPage: page > 1,
-      };
+      return response.data.data; // Extract data from success response
     } catch (error) {
       console.error("Error fetching posts:", error);
-      throw new Error("Failed to fetch posts");
+      throw new Error(error.response?.data?.error || "Failed to fetch posts");
     }
   },
 
-  // Getting single post by ID
-  async getPostById(id) {
+  // Get single post by ID
+  async getPostById(id, includeAnalysis = true) {
     try {
-      const response = await api.get(`/posts/${id}`);
-      return response.data;
+      const response = await dbApi.get(`/posts/${id}`, {
+        params: { includeAnalysis },
+      });
+
+      return response.data.data;
     } catch (error) {
       console.error("Error fetching post:", error);
       if (error.response?.status === 404) {
         throw new Error("Post not found");
       }
-      throw new Error("Failed to fetch post");
+      throw new Error(error.response?.data?.error || "Failed to fetch post");
     }
   },
 
-  // Creatng new post
+  // Create new post
   async createPost(postData) {
     try {
-      const response = await api.post("/posts", {
+      const response = await dbApi.post("/posts", {
         title: postData.title,
         body: postData.body,
         userId: postData.userId || 1,
       });
 
-      // JSONPlaceholder returns a post with id 101, but we'll use timestamp for uniqueness
-      return {
-        ...response.data,
-        id: Date.now(), // Use timestamp for local uniqueness
-        isLocal: true, // Flag to identify locally created posts
-      };
+      return response.data.data;
     } catch (error) {
       console.error("Error creating post:", error);
-      throw new Error("Failed to create post");
+      throw new Error(error.response?.data?.error || "Failed to create post");
     }
   },
 
   // Update post
   async updatePost(id, updateData) {
     try {
-      const response = await api.put(`/posts/${id}`, updateData);
-      return response.data;
+      const response = await dbApi.put(`/posts/${id}`, updateData);
+      return response.data.data;
     } catch (error) {
       console.error("Error updating post:", error);
-      throw new Error("Failed to update post");
+      throw new Error(error.response?.data?.error || "Failed to update post");
     }
   },
 
   // Delete post
   async deletePost(id) {
     try {
-      await api.delete(`/posts/${id}`);
-      return { success: true };
+      const response = await dbApi.delete(`/posts/${id}`);
+      return response.data.data;
     } catch (error) {
       console.error("Error deleting post:", error);
-      throw new Error("Failed to delete post");
+      throw new Error(error.response?.data?.error || "Failed to delete post");
     }
   },
 };
 
-// Users API functions (for additional user info)
-export const usersAPI = {
-  async getUserById(id) {
+// External API functions (for syncing from JSONPlaceholder)
+export const externalAPI = {
+  async getAllPosts() {
     try {
-      const response = await api.get(`/users/${id}`);
+      const response = await externalApi.get("/posts");
       return response.data;
     } catch (error) {
-      console.error("Error fetching user:", error);
-      throw new Error("Failed to fetch user");
+      console.error("Error fetching posts from external API:", error);
+      throw new Error("Failed to fetch posts from external API");
+    }
+  },
+
+  async getPostById(id) {
+    try {
+      const response = await externalApi.get(`/posts/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching post from external API:", error);
+      throw new Error("Failed to fetch post from external API");
+    }
+  },
+
+  async getUserById(id) {
+    try {
+      const response = await externalApi.get(`/users/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user from external API:", error);
+      throw new Error("Failed to fetch user from external API");
     }
   },
 };
 
-// Comments API functions (for future use)
+// Keep old exports for backward compatibility
+export const usersAPI = {
+  async getUserById(id) {
+    return externalAPI.getUserById(id);
+  },
+};
+
 export const commentsAPI = {
   async getCommentsByPostId(postId) {
     try {
-      const response = await api.get(`/posts/${postId}/comments`);
+      const response = await externalApi.get(`/posts/${postId}/comments`);
       return response.data;
     } catch (error) {
       console.error("Error fetching comments:", error);
@@ -145,4 +183,4 @@ export const commentsAPI = {
   },
 };
 
-export default api;
+export default dbApi;
