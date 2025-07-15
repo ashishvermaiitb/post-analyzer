@@ -68,7 +68,18 @@ export const postsAPI = {
         params: { page, limit, includeAnalysis },
       });
 
-      return response.data.data; // Extract data from success response
+      // Extract data from the success response structure
+      const responseData = response.data.data;
+
+      // Transform to match expected format
+      return {
+        posts: responseData.posts,
+        totalPosts: responseData.pagination.totalPosts,
+        currentPage: responseData.pagination.currentPage,
+        totalPages: responseData.pagination.totalPages,
+        hasNextPage: responseData.pagination.hasNextPage,
+        hasPreviousPage: responseData.pagination.hasPreviousPage,
+      };
     } catch (error) {
       console.error("Error fetching posts:", error);
       throw new Error(error.response?.data?.error || "Failed to fetch posts");

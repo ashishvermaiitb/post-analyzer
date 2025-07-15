@@ -23,7 +23,10 @@ export async function GET(request) {
       prisma.post.findMany({
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { isLocal: "desc" }, // Local posts first
+          { id: "asc" }, // Then by ID ascending (1, 2, 3...)
+        ],
         include: {
           analysis: includeAnalysis
             ? {
