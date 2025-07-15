@@ -2,23 +2,36 @@
   "name": "post-analyzer",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset",
+    "db:init": "node scripts/init-db.js",
+    "db:sync": "node scripts/sync-data.js",
+    "test:env": "node scripts/test-env.js",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^6.11.1",
+    "@prisma/client": "^6.12.0",
     "@tanstack/react-query": "^5.83.0",
     "axios": "^1.10.0",
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "15.4.1",
-    "prisma": "^6.11.1",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "prisma": "^6.12.0",
     "tailwindcss": "^4"
   }
 }
