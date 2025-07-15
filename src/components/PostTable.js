@@ -1,4 +1,9 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export default function PostTable({ posts, loading }) {
+  const router = useRouter();
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -65,10 +70,7 @@ export default function PostTable({ posts, loading }) {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button
                     className="text-blue-600 hover:text-blue-900 font-medium"
-                    onClick={() => {
-                      // TODO: Navigate to post details
-                      console.log("View post:", post.id);
-                    }}
+                    onClick={() => router.push(`/posts/${post.id}`)}
                   >
                     View Details
                   </button>
