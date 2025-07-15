@@ -28,7 +28,6 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
         body: body.trim(),
         userId: 1,
       };
-
       onPostCreated(newPost);
     } catch (error) {
       console.error("Error creating post:", error);
