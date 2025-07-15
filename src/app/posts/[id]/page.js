@@ -12,7 +12,7 @@ export default function PostDetails() {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Update title state when post loads
+  // Updating title state when post loads
   useState(() => {
     if (post) {
       setTitle(post.title);
@@ -173,7 +173,8 @@ export default function PostDetails() {
           </h3>
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="text-gray-600 mb-3">
-              Analysis results will appear here once C++ backend is integrated.
+              Hiii.. I'm Ashish.. rn working on it... <br /> Analysis results
+              will appear here once C++ backend is integrated.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
               <div className="bg-white p-3 rounded border">
