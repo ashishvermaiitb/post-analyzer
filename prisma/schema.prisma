@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  externalId  Int?     // JSONPlaceholder ID for synced posts
+  title       String
+  body        String
+  userId      Int
+  isLocal     Boolean  @default(false) // Flag for locally created posts
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  analysis    PostAnalysis[]
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@unique([externalId]) // Ensure external IDs are unique
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  username  String   @unique
+  email     String   @unique
+  phone     String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  posts     Post[]
+  sessions  UserSession[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model PostAnalysis {
+  id            Int      @id @default(autoincrement())
+  postId        Int
+  wordCount     Int?
+  sentiment     Float?   // Sentiment score from -1 to 1
+  sentimentLabel String? // POSITIVE, NEGATIVE, NEUTRAL
+  keywords      String[] // Array of extracted keywords
+  readingTime   Int?     // Estimated reading time in minutes
+  complexity    Float?   // Text complexity score
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([createdAt])
+}
+
+model ApiKey {
+  id          Int      @id @default(autoincrement())
+  name        String   // Human-readable name for the API key
+  key         String   @unique // The actual API key (hashed)
+  isActive    Boolean  @default(true)
+  permissions String[] // Array of permissions (CREATE_POST, UPDATE_POST, DELETE_POST, etc.)
+  lastUsed    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@index([isActive])
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model SyncLog {
+  id          Int      @id @default(autoincrement())
+  action      String   // SYNC_POSTS, SYNC_USERS, etc.
+  status      String   // SUCCESS, FAILED, PARTIAL
+  recordCount Int?     // Number of records processed
+  errorMessage String?
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([status])
+  @@index([createdAt])
+}
