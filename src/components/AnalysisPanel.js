@@ -7,8 +7,8 @@ export default function AnalysisPanel({ post, onAnalyze }) {
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
 
-  // Get latest analysis from post data
-  const latestAnalysis = post?.analysis?.[0] || null;
+  // Removed this line to prevent showing pre-existing analysis
+  // const latestAnalysis = post?.analysis?.[0] || null;
 
   const handleAnalyze = async () => {
     if (!post?.id) return;
@@ -45,7 +45,8 @@ export default function AnalysisPanel({ post, onAnalyze }) {
     }
   };
 
-  const displayAnalysis = analysis || latestAnalysis;
+  // Only use analysis from the current session, not from database
+  const displayAnalysis = analysis;
 
   const getSentimentColor = (sentiment) => {
     if (sentiment > 0.1) return "text-green-600 bg-green-50";
@@ -202,9 +203,9 @@ export default function AnalysisPanel({ post, onAnalyze }) {
             {displayAnalysis.source && (
               <span className="bg-gray-200 px-2 py-1 rounded">
                 Source:{" "}
-                {displayAnalysis.source === "cpp_webassembly"
-                  ? "C++ WebAssembly"
-                  : "JavaScript Fallback"}
+                {displayAnalysis.source === "advanced_javascript"
+                  ? "Advanced Algorithm"
+                  : displayAnalysis.source}
               </span>
             )}
           </div>

@@ -47,15 +47,15 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className="px-6 py-4 border-b flex justify-between items-center">
+      <div className="bg-white rounded-lg max-w-md w-full shadow-2xl">
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-900">
             Create New Post
           </h3>
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-600 disabled:opacity-50 transition-colors"
           >
             <svg
               className="w-6 h-6"
@@ -75,7 +75,7 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
 
         <form onSubmit={handleSubmit} className="p-6">
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded-md text-sm">
               {error}
             </div>
           )}
@@ -83,17 +83,17 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
           <div className="mb-4">
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-semibold text-gray-700 mb-2"
             >
-              Title *
+              Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter post title"
+              className="w-full px-3 py-3 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+              placeholder="Enter post title..."
               disabled={loading}
               maxLength={200}
             />
@@ -105,17 +105,17 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
           <div className="mb-6">
             <label
               htmlFor="body"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-semibold text-gray-700 mb-2"
             >
-              Content *
+              Content <span className="text-red-500">*</span>
             </label>
             <textarea
               id="body"
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical"
-              placeholder="Enter post content"
+              className="w-full px-3 py-3 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical placeholder-gray-500"
+              placeholder="Write your post content here..."
               disabled={loading}
               maxLength={1000}
             />
@@ -128,14 +128,14 @@ export default function CreatePostModal({ onClose, onPostCreated }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 disabled:opacity-50"
+              className="px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50 font-medium transition-colors"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-medium transition-colors"
               disabled={loading || !title.trim() || !body.trim()}
             >
               {loading && (
