@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { usePost } from "../../../hooks/usePosts";
+import AnalysisPanel from "../../../components/AnalysisPanel";
 
 export default function PostDetails() {
   const { id } = useParams();
@@ -12,8 +13,8 @@ export default function PostDetails() {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Updating title state when post loads
-  useState(() => {
+  // Update title state when post loads
+  useEffect(() => {
     if (post) {
       setTitle(post.title);
     }
@@ -35,6 +36,11 @@ export default function PostDetails() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleAnalysisComplete = (analysisData) => {
+    // Optionally refresh the post data to get updated analysis
+    console.log("Analysis completed:", analysisData);
   };
 
   if (loading) {
@@ -148,72 +154,62 @@ export default function PostDetails() {
           </div>
         ) : (
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              {post.title}
-            </h1>
-            <button
-              onClick={() => setEditing(true)}
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Edit Title
-            </button>
+            <div className="flex justify-between items-start mb-2">
+              <h1 className="text-3xl font-bold text-gray-800">{post.title}</h1>
+              <button
+                onClick={() => setEditing(true)}
+                className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+              >
+                Edit Title
+              </button>
+            </div>
+            {post.user && (
+              <p className="text-sm text-gray-500">
+                By {post.user.name} (@{post.user.username})
+              </p>
+            )}
           </div>
         )}
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            Post Content
-          </h3>
-          <p className="text-gray-600 leading-relaxed">{post.body}</p>
-        </div>
-
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Post Analysis
-          </h3>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-gray-600 mb-3">
-              Hiii.. I'm Ashish.. rn working on it... <br /> Analysis results
-              will appear here once C++ backend is integrated.
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Content</h3>
+          <div className="prose max-w-none">
+            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {post.body}
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
-              <div className="bg-white p-3 rounded border">
-                <span className="font-medium">Word count:</span>
-                <span className="block text-lg font-bold text-gray-700">
-                  Coming soon
-                </span>
-              </div>
-              <div className="bg-white p-3 rounded border">
-                <span className="font-medium">Sentiment score:</span>
-                <span className="block text-lg font-bold text-gray-700">
-                  Coming soon
-                </span>
-              </div>
-              <div className="bg-white p-3 rounded border">
-                <span className="font-medium">Keywords:</span>
-                <span className="block text-lg font-bold text-gray-700">
-                  Coming soon
-                </span>
-              </div>
-            </div>
           </div>
         </div>
+
+        {/* Analysis Panel */}
+        <AnalysisPanel post={post} onAnalyze={handleAnalysisComplete} />
 
         <div className="mt-6 pt-6 border-t">
-          <div className="text-sm text-gray-500">
-            <p>
-              <strong>Post ID:</strong> {post.id}
-            </p>
-            <p>
-              <strong>User ID:</strong> {post.userId}
-            </p>
-            {post.isLocal && (
-              <p className="text-blue-600 mt-2">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
-                This is a locally created post
+          <div className="text-sm text-gray-500 grid grid-cols-2 gap-4">
+            <div>
+              <p>
+                <strong>Post ID:</strong> {post.id}
               </p>
-            )}
+              <p>
+                <strong>User ID:</strong> {post.userId}
+              </p>
+            </div>
+            <div>
+              <p>
+                <strong>Created:</strong>{" "}
+                {new Date(post.createdAt).toLocaleString()}
+              </p>
+              <p>
+                <strong>Updated:</strong>{" "}
+                {new Date(post.updatedAt).toLocaleString()}
+              </p>
+            </div>
           </div>
+          {post.isLocal && (
+            <p className="text-blue-600 mt-2 text-sm">
+              <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+              This is a locally created post
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,6 @@
-import { apiKeysDB } from "./database.js";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 // API Key validation middleware
 export async function validateApiKey(request) {
@@ -14,20 +16,43 @@ export async function validateApiKey(request) {
     };
   }
 
-  const validatedKey = await apiKeysDB.validateApiKey(apiKey);
+  try {
+    const validatedKey = await prisma.apiKey.findUnique({
+      where: { key: apiKey },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        permissions: true,
+      },
+    });
 
-  if (!validatedKey) {
+    if (!validatedKey || !validatedKey.isActive) {
+      return {
+        isValid: false,
+        error: "Invalid or inactive API key",
+        status: 401,
+      };
+    }
+
+    // Update last used timestamp
+    await prisma.apiKey.update({
+      where: { key: apiKey },
+      data: { lastUsed: new Date() },
+    });
+
+    return {
+      isValid: true,
+      apiKey: validatedKey,
+    };
+  } catch (error) {
+    console.error("Error validating API key:", error);
     return {
       isValid: false,
-      error: "Invalid or inactive API key",
-      status: 401,
+      error: "Internal server error",
+      status: 500,
     };
   }
-
-  return {
-    isValid: true,
-    apiKey: validatedKey,
-  };
 }
 
 // Permission check middleware
@@ -80,36 +105,6 @@ export async function withAuth(request, requiredPermission = null) {
   return {
     success: true,
     apiKey: keyValidation.apiKey,
-  };
-}
-
-// Rate limiting helper (simple in-memory implementation)
-const rateLimitStore = new Map();
-
-export function rateLimit(identifier, windowMs = 60000, maxRequests = 100) {
-  const now = Date.now();
-  const windowStart = now - windowMs;
-
-  // Clean old entries
-  const requests = rateLimitStore.get(identifier) || [];
-  const validRequests = requests.filter((timestamp) => timestamp > windowStart);
-
-  // Check if limit exceeded
-  if (validRequests.length >= maxRequests) {
-    return {
-      allowed: false,
-      resetTime: validRequests[0] + windowMs,
-      remaining: 0,
-    };
-  }
-
-  // Add current request
-  validRequests.push(now);
-  rateLimitStore.set(identifier, validRequests);
-
-  return {
-    allowed: true,
-    remaining: maxRequests - validRequests.length,
   };
 }
 
