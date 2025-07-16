@@ -12,9 +12,9 @@ const prisma = new PrismaClient();
 // GET /api/posts/[id] - Get single post
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params; // Await params for Next.js 15
     const { searchParams } = new URL(request.url);
-    const includeAnalysis = searchParams.get("includeAnalysis") !== "false"; // Default to true
+    const includeAnalysis = searchParams.get("includeAnalysis") !== "false";
 
     const post = await prisma.post.findUnique({
       where: { id: parseInt(id) },
@@ -22,7 +22,7 @@ export async function GET(request, { params }) {
         analysis: includeAnalysis
           ? {
               orderBy: { createdAt: "desc" },
-              take: 1, // Get latest analysis
+              take: 1,
             }
           : false,
         user: {
@@ -48,18 +48,16 @@ export async function GET(request, { params }) {
 // PUT /api/posts/[id] - Update post (requires API key)
 export async function PUT(request, { params }) {
   try {
-    // Validate API key and permissions
     const authResult = await withAuth(request, "UPDATE_POST");
     if (!authResult.success) {
       const response = createErrorResponse(authResult.error, authResult.status);
       return setCorsHeaders(response);
     }
 
-    const { id } = params;
+    const { id } = await params; // Await params for Next.js 15
     const body = await request.json();
     const { title, body: postBody } = body;
 
-    // Check if post exists
     const existingPost = await prisma.post.findUnique({
       where: { id: parseInt(id) },
     });
@@ -69,7 +67,6 @@ export async function PUT(request, { params }) {
       return setCorsHeaders(response);
     }
 
-    // Update post
     const updateData = {};
     if (title !== undefined) updateData.title = title.trim();
     if (postBody !== undefined) updateData.body = postBody.trim();
@@ -96,16 +93,14 @@ export async function PUT(request, { params }) {
 // DELETE /api/posts/[id] - Delete post (requires API key)
 export async function DELETE(request, { params }) {
   try {
-    // Validate API key and permissions
     const authResult = await withAuth(request, "DELETE_POST");
     if (!authResult.success) {
       const response = createErrorResponse(authResult.error, authResult.status);
       return setCorsHeaders(response);
     }
 
-    const { id } = params;
+    const { id } = await params; // Await params for Next.js 15
 
-    // Check if post exists
     const existingPost = await prisma.post.findUnique({
       where: { id: parseInt(id) },
     });
@@ -115,7 +110,6 @@ export async function DELETE(request, { params }) {
       return setCorsHeaders(response);
     }
 
-    // Delete post (this will cascade delete analysis records)
     await prisma.post.delete({
       where: { id: parseInt(id) },
     });
